@@ -83,14 +83,27 @@ def permutations(iterable: Iterator[item], r:Optional[int] = None) -> Iterator[T
     Returns:
         Iterator[Tuple[item]] - all possible permutations
     """
-    length = len(iterable)
-    items = length if r is None or r > length else r
-    item_indices = [
-            indices 
-            for indices in product(*([list(range(length))]*items))
-            if len(set(indices)) == items]
-    for indices in item_indices:
-        yield tuple(iterable[i] for i in indices)
+    n = len(iterable)
+    r = n if r is None or r > n else r
+    lst = list(range(n))
+    changes = list(range(n, n-r, -1))
+    yield tuple(iterable[i] for i in lst[:r])
+    while True:
+        i = r - 1
+        flag = True
+        while i >= 0:
+            changes[i] -= 1
+            if changes[i] == 0:
+                lst.append(lst.pop(i))
+                changes[i] = n - i
+            else:
+                j = n - changes[i]
+                lst[j], lst[i] = lst[i], lst[j]
+                flag = False
+                yield tuple(iterable[k] for k in lst[:r])
+            i -= 1
+        if flag:
+            break
 
 def combinations(r: int, n: int) -> Iterator[Tuple[int]]:
     """
@@ -106,11 +119,11 @@ def combinations(r: int, n: int) -> Iterator[Tuple[int]]:
     r = min(r, n)
     lst = list(range(1, r+1))
     yield tuple(lst)
-    while lst[0] <= n - r:
-        i = r - 1
-        while lst[i] == n - r + i:
+    while lst[0] != n - r + 1:
+        i = r
+        while i > 1 and lst[i - 1] == n - r + i:
             i -= 1
-        lst[i:] = list(range(lst[i-1]+1, lst[i-1] + r - i))
+        lst[i - 1:] = list(range(lst[i-1] + 1, lst[i-1] + r - i + 2))
         yield tuple(lst)
 
 def combinations_with_replacement(r:int, n: int) -> Iterator[Tuple[int]]:
