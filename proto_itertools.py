@@ -72,6 +72,37 @@ def product(*iterates: Iterator[Iterator[item]]) -> Iterator[Tuple[item]]:
     for iterate in prods:
         yield iterate
 
+def index_permutations(lst: Iterator[int]) -> Iterator[Tuple[int]]:
+    """
+    Generate all permutations of indexes.
+    Helper function for permutations
+
+    Args:
+        lst: list of indices
+
+    Returns:
+        Iterator[Tuple[int]]
+    """
+    rev = list(sorted(lst, reverse=True))
+    ls = list(sorted(lst))
+    n = len(ls)
+    yield tuple(ls)
+    while ls != rev:
+        j = n - 2
+        while ls[j] > ls[j+1]:
+            j -= 1
+        k = n - 1
+        while ls[j] > ls[k]:
+            k -= 1
+        ls[j], ls[k] = ls[k], ls[j]
+        r = n -1
+        s = j + 1
+        while r > s:
+            ls[r], ls[s] = ls[s], ls[r]
+            r -= 1
+            s += 1
+        yield tuple(ls) 
+
 def permutations(iterable: Iterator[item], r:Optional[int] = None) -> Iterator[Tuple[item]]:
     """
     Get permutations of iterable
@@ -83,6 +114,9 @@ def permutations(iterable: Iterator[item], r:Optional[int] = None) -> Iterator[T
     Returns:
         Iterator[Tuple[item]] - all possible permutations
     """
+    # I am not even going to pretend that this was not googled. 
+    # Big thanks to Mcoding, without him I would not have made this
+    # work in O(n!) and not O(n^2 * n!)
     n = len(iterable)
     r = n if r is None or r > n else r
     lst = list(range(n))
@@ -104,6 +138,18 @@ def permutations(iterable: Iterator[item], r:Optional[int] = None) -> Iterator[T
             i -= 1
         if flag:
             break
+    # This is the algorithm from the lecture, along with the
+    # helper permutation function above.
+    # PLEASE do not use it, it will trigger oom-killer (out of memory killer)
+    # on your user process if you try to store it all in a list.
+    # Should you, for some idiotic reason, want to do this,
+    # for God's sake use a for loop
+    # n = len(iterable)
+    # r = n if r is None or r > n else r
+    # combs = [[x - 1 for x in comb] for comb in combinations(r, n)]
+    # for comb in combs:
+    #     for perm in index_permutations(comb):
+    #         yield tuple(iterable[i] for i in perm)
 
 def combinations(r: int, n: int) -> Iterator[Tuple[int]]:
     """
