@@ -3,7 +3,7 @@ The two-satisfiability problem,
 used in a graph 3-colouring problem
 """
 
-from itertools import Dict, Tuple, List
+from typing import Dict, Tuple, List
 
 def read_csv(file_path: str) -> Dict[Tuple[int], List[Tuple[int]]]:
     """
@@ -42,5 +42,4 @@ def colour_graph(
     Returns:
         Dict[Tuple[int], List[Tuple[int]]] - a coloured graph
     """
-    pass
     pass
