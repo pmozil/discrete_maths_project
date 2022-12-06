@@ -9,7 +9,7 @@ The file consists of four functions:
 - `colour_graph` - returns either a recoloured graph or nothing, if the graph does not exist
 
 **Because there are only three functions, @pmozil proposes that there be 
-multiple `colour_graph functions**
+multiple `colour_graph` functions**
 
 Here's the distribution of work:
     - `read_csv` **(author here)**
