@@ -19,7 +19,7 @@ def read_csv(file_path: str) -> Dict[Tuple[int], List[Tuple[int]]]:
     """
     pass
 
-def read_csv(file_path: str, graph: Dict[Tuple[int], List[Tuple[int]]]) -> None:
+def write_csv(file_path: str, graph: Dict[Tuple[int], List[Tuple[int]]]) -> None:
     """
     Writes dictionary with a coloured vertice as key and
     a list of coloured vertices as objects to a csv file
