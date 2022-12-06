@@ -15,3 +15,24 @@ Here's the distribution of work:
     - `read_csv` **(author here)**
     - `write_csv` **(author here)**
     - `colour_graph` **(author here)**
+
+CSV example (`test.csv`):
+```
+0,1,1,2
+0,2,1,3
+1,2,2,3
+3,0,2,1
+2,3,3,2
+```
+
+`read_csv` on this CSV must return this python dictionary:
+```python
+{
+    (0,1): [(1,2), (2,3), (3,2)],
+    (1,2): [(0,1), (2,3)],
+    (2,3): [(0,1), (1,2), (3,2)],
+    (3,2): [(0,1), (2,3)]
+}
+```
+
+and `write_csv` must write the same csv as `test.csv` into the file
