@@ -23,7 +23,7 @@ def _least_colour(
 
 def _colouring(
     graph: Dict[int, List[int]],
-    colours: Dic[int, int]
+    colours: Dict[int, int],
     numbering: List[int]
 ) -> Tuple[Dict[Tuple[int], List[Tuple[int]]], int]:
     """
@@ -100,12 +100,12 @@ def _colouring_genetic_with_memo(
     colours = {}
     for node, els in graph.items():
         base_graph[node[0]] = [el[0] for el in els]
-        colours[node[0]] = colours[node[1]]
-    length = len(vertices)
+        colours[node[0]] = node[1]
+    length = len(colours)
     colourings = {}
 
     iters = 0
-    while iters < 1024:
+    while iters < 32:
         numbering = tuple(_gen_rand_numbering(length))
         # Tuples here, gotta have sets
         colourings[numbering] = _colouring(base_graph, colours, numbering)
@@ -119,6 +119,6 @@ def _colouring_genetic_with_memo(
                 new_colourings[new_numbering] = _colouring(base_graph, colours, new_numbering)
 
         for cols, el in new_colourings.items():
-            colourings[colouring] = el
+            colourings[cols] = el
 
-    return list(sorted(colourings.items(), key=lambda x: x[1]))[:5]
+    return list(sorted(colourings.items(), key=lambda x: x[1][1]))[:5]
