@@ -2,6 +2,17 @@ import random as r
 from typing import Dict, Tuple, List
 from io import StringIO
 
+def rg(path):
+    gr = {}
+    with open(path, 'r') as infile:
+        quints = map(lambda x: tuple(map(int, x)), [line.split(',') for line in infile.readlines()])
+        for obj in quints:
+            if (obj[0], obj[3]) in gr:
+                gr[(obj[0], obj[3])].add((obj[2]. obj[3]))
+            else:
+                gr[(obj[0], obj[3])] = {(obj[2], obj[3])}
+    return gr
+
 def _least_colour(
         colours: List[int]
 ) -> int:
@@ -88,7 +99,7 @@ def _colouring_genetic_with_memo(
     graph: Dict[Tuple[int], List[Tuple[int]]]
 ) -> List[Tuple[Dict[Tuple[int], List[Tuple[int]]], int]]:
     """
-    Perform a genetic graph colouring optimisation algorithm on a given graph
+    Perform a genetic graph colouring optimisation algorithm on a given graph, with memoisation
 
     Args:
         graph: Dict[Tuple[int], List[Tuple[int]] - a coloured graph
@@ -111,7 +122,7 @@ def _colouring_genetic_with_memo(
         colourings[numbering] = _colouring(base_graph, colours, numbering)
         iters += 1
     
-    for _ in range(32):
+    for _ in range(16):
         new_colourings = {}
         for numbering in colourings:
             new_numbering = tuple(_mutate_genome(list(numbering)))
@@ -122,3 +133,55 @@ def _colouring_genetic_with_memo(
             colourings[cols] = el
 
     return list(sorted(colourings.items(), key=lambda x: x[1][1]))[:5]
+
+def _colouring_genetic(
+    graph: Dict[Tuple[int], List[Tuple[int]]]
+) -> List[Tuple[Dict[Tuple[int], List[Tuple[int]]], int]]:
+    """
+    Perform a genetic graph colouring optimisation algorithm on a given graph
+
+    Args:
+        graph: Dict[Tuple[int], List[Tuple[int]] - a coloured graph
+
+    Returns:
+        Tuple[Tuple[List[int], int]] - a (somewhat) optimised colouring of a graph
+    """
+    base_graph = {}
+    colours = {}
+    for node, els in graph.items():
+        base_graph[node[0]] = [el[0] for el in els]
+        colours[node[0]] = node[1]
+    length = len(colours)
+    colourings = []
+
+    iters = 0
+    while iters < 32:
+        numbering = tuple(_gen_rand_numbering(length))
+        col_graph, max_cols = _colouring(base_graph, colours, numbering)
+        for ind, struct in enumerate(colourings):
+            if max_cols < struct[1][1]:
+                colourings.insert(ind, (numbering, (col_graph, max_cols)))
+                break
+        else:
+            colourings.append((numbering, (col_graph, max_cols)))
+        iters += 1
+    
+    for _ in range(32):
+        new_colourings = []
+        for numbering in colourings:
+            new_numbering = tuple(_mutate_genome(list(numbering)))
+            for ind, struct in enumerate(colourings):
+                if max_cols < struct[1][1]:
+                    colourings.insert(ind, (numbering, (col_graph, max_cols)))
+                    break
+        else:
+            colourings.append((numbering, (col_graph, max_cols)))
+
+        for cols, el in new_colourings:
+            for ind, struct in enumerate(colourings):
+                if el[1] < struct[1][1]:
+                    colourings.insert(ind, (cols, el))
+                    break
+        colourings = colourings[:32]
+
+    return list(sorted(colourings, key=lambda x: x[1][1]))[0]
