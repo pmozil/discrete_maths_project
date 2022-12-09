@@ -7,10 +7,14 @@ def rg(path):
     with open(path, 'r') as infile:
         quints = map(lambda x: tuple(map(int, x)), [line.split(',') for line in infile.readlines()])
         for obj in quints:
-            if (obj[0], obj[3]) in gr:
-                gr[(obj[0], obj[3])].add((obj[2]. obj[3]))
+            if (obj[0], obj[2]) in gr:
+                gr[(obj[0], obj[2])].add((obj[1], obj[3]))
             else:
-                gr[(obj[0], obj[3])] = {(obj[2], obj[3])}
+                gr[(obj[0], obj[2])] = {(obj[1], obj[3])}
+            if (obj[1], obj[3]) in gr:
+                gr[(obj[1], obj[3])].add((obj[0], obj[2]))
+            else:
+                gr[(obj[1], obj[3])] = {(obj[0], obj[2])}
     return gr
 
 def _least_colour(
