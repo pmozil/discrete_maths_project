@@ -25,8 +25,7 @@ def form_sats(
         bool - whether the graph edge colouring is valid
     """
     # nodes = {node: [False, False, False] for node in graph}
-    print(nodes)
-    forms = []
+    # print(nodes)
     for node, items in graph.items():
         node_col = nodes[(node*3):(node*3 + 3)].count(True) == 1
         # for y in items:
@@ -37,5 +36,6 @@ def form_sats(
                 for y in items
                 for i in range(3)
             )
-        forms.append(node_col and no_neighbours)
-    return all(forms)
+        if not (node_col and no_neighbours):
+            return False
+    return return True
