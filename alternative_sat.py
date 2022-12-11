@@ -43,6 +43,8 @@ def form_sats(
     return True
 
 # We should've taken the Catalan numbers
+# TODO: get the min value, so as to create a list, which would be accesed as
+# lst[abs(min_val) + index]. This'd help us with determining the colours
 def make_impl_graph(
     graph: Dict[int, List[int]]
 ) -> Dict[int, List[int]]:
@@ -62,9 +64,6 @@ def make_impl_graph(
         for i in range(vertice, vertice+3):
             result[i] = list(range(-vertice-2, -vertice+1))
             result[i].pop(2 - vertice%3)
-            result[-i] = list(range(vertice, vertice+3))
-            result[-i].pop(vertice%3)
             for item in items:
                 result[i].extend(list(range(-item-2, -item+1)))
-                result[-i].extend(list(range(item, item+3)))
     return result, graph
