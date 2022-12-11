@@ -4,6 +4,8 @@
 
 from typing import Callable, Dict, Tuple, List
 
+# The function is redundant now, but it has sentimental value for me
+# Should someone delete this, I'll remove their kneecaps with an ice cream scoop
 def form_sats(
     graph: Dict[int, List[int]],
     nodes: List[bool]
@@ -38,4 +40,31 @@ def form_sats(
             )
         if not (node_col and no_neighbours):
             return False
-    return return True
+    return True
+
+# We should've taken the Catalan numbers
+def make_impl_graph(
+    graph: Dict[int, List[int]]
+) -> Dict[int, List[int]]:
+    """
+    Make a directed implication graph from an undirected graph
+    Args:
+        graph: Dict[int, List[int]] - a dictionary.
+            Basically an unsparsed adjacency matrix
+    Returns:
+        bool - whether the graph edge colouring is valid
+    x v y = !x -> y & !y -> x
+    """
+    # Need to multiply by three, because there's three nodes for each colour
+    graph = {(vert+1)*3 : {(v+1)*3 for v in graph[vert]} for vert in graph}
+    result = {}
+    for vertice, items in graph.items():
+        for i in range(vertice, vertice+3):
+            result[i] = list(range(-vertice-2, -vertice+1))
+            result[i].pop(2 - vertice%3)
+            result[-i] = list(range(vertice, vertice+3))
+            result[-i].pop(vertice%3)
+            for item in items:
+                result[i].extend(list(range(-item-2, -item+1)))
+                result[-i].extend(list(range(item, item+3)))
+    return result, graph
