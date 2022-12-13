@@ -2,7 +2,7 @@
 2-SAT solution for the graph 3-colouring problem
 """
 
-from typing import Callable, Dict, Tuple, List
+from typing import Dict, Tuple, List, Set, Iterator
 
 # The function is redundant now, but it has sentimental value for me
 # Should someone delete this, I'll remove their kneecaps with an ice cream scoop
@@ -43,8 +43,6 @@ def form_sats(
     return True
 
 # We should've taken the Catalan numbers
-# TODO: get the min value, so as to create a list, which would be accesed as
-# lst[abs(min_val) + index]. This'd help us with determining the colours
 def make_impl_graph(
     graph: Dict[int, List[int]]
 ) -> Dict[int, List[int]]:
@@ -63,7 +61,85 @@ def make_impl_graph(
     for vertice, items in graph.items():
         for i in range(vertice, vertice+3):
             result[i] = list(range(-vertice-2, -vertice+1))
-            result[i].pop(2 - vertice%3)
+            result[i].pop(2 - i%3)
             for item in items:
-                result[i].extend(list(range(-item-2, -item+1)))
-    return result, graph
+                result[i].append(item + i%3)
+    return result, min(result)
+
+def dfs(grp: Dict[int, List[int]], cur: int, visited: Set[int], path: List[int]) -> List[int]:
+    """
+    Perform dfs on graph
+
+    Args:
+        graph: a directed graph
+
+    Returns:
+        List[int] - the order of the nodes
+    """
+    if cur in visited:
+        return
+
+    graph = {vertice: sorted(edges) for vertice, edges in grp.items()}
+    result = []
+    stack = [cur]
+
+    while stack:
+        s = stack[-1]
+        visited.add(s)
+        if s not in path:
+            path.append(s)
+        if s in graph:
+            graph[s] = list(filter(lambda x: x not in visited, graph[s]))
+            if graph[s] != []:
+                stack.append(graph[s][0])
+                continue
+        stack.remove(s)
+
+    return path
+
+def invert_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
+    """
+    Invert the edges in a graph
+
+    Args:
+        graph: Dict[int, Lisst[int]] - a graph to be inverted
+
+    Returns:
+        Dict[int, List[int]] - an inverted graph
+    """
+    new_graph = {}
+    for node, items in graph.items():
+        for item in items:
+            if item not in new_graph:
+                new_graph[item] = [node]
+            else:
+                new_graph[item].append(node)
+    return new_graph
+
+def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
+    """
+    Perform Kosaraju's algorith on graph
+    
+    Args:
+        graph: a idrected graph
+
+    Returns:
+        List[Set[int]] - a list of strongly connected components
+    """
+    visited = set()
+    base_path = []
+    for i in graph.keys():
+        if i not in visited:
+            dfs(graph, i, visited, base_path)
+
+    graph_inv = invert_graph(graph)
+    visited.clear()
+    path = []
+    while len(base_path):
+        node = base_path.pop()
+        if node not in visited:
+            dfs(graph_inv, node, visited, path)
+            yield path[:]
+            path.clear()
+    return
+

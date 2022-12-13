@@ -6,8 +6,4 @@ def fc(n):
 	return lst
 gr = rg("test.csv")
 grp = {vert[0]: [v[0] for v in gr[vert]] for vert in gr}
-lst = []
-for v in gr:
-    print(v)
-    lst.extend(fc(v[1]))
-print(form_sats(grp, lst))
+gr, n = make_impl_graph(grp)
