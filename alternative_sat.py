@@ -6,10 +6,7 @@ from typing import Dict, Tuple, List, Set, Iterator
 
 # The function is redundant now, but it has sentimental value for me
 # Should someone delete this, I'll remove their kneecaps with an ice cream scoop
-def form_sats(
-    graph: Dict[int, List[int]],
-    nodes: List[bool]
-) -> bool:
+def form_sats(graph: Dict[int, List[int]], nodes: List[bool]) -> bool:
     """
     Perform a conjunctive normal formula on a graph and it's colour representation
     Args:
@@ -29,23 +26,22 @@ def form_sats(
     # nodes = {node: [False, False, False] for node in graph}
     # print(nodes)
     for node, items in graph.items():
-        node_col = nodes[(node*3):(node*3 + 3)].count(True) == 1
+        node_col = nodes[(node * 3) : (node * 3 + 3)].count(True) == 1
         # for y in items:
-            # for i in range(3):
-                # print(f"{(node*3 + i, y*3 + i)}: {not (nodes[node*3 + i] and nodes[y*3 + i])}")
+        # for i in range(3):
+        # print(f"{(node*3 + i, y*3 + i)}: {not (nodes[node*3 + i] and nodes[y*3 + i])}")
         no_neighbours = all(
-            not (nodes[node*3 + i] and nodes[y*3 + i])
-                for y in items
-                for i in range(3)
-            )
+            not (nodes[node * 3 + i] and nodes[y * 3 + i])
+            for y in items
+            for i in range(3)
+        )
         if not (node_col and no_neighbours):
             return False
     return True
 
+
 # We should've taken the Catalan numbers
-def make_impl_graph(
-    graph: Dict[int, List[int]]
-) -> Dict[int, List[int]]:
+def make_impl_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
     """
     Make a directed implication graph from an undirected graph
     Args:
@@ -56,17 +52,42 @@ def make_impl_graph(
     x v y = !x -> y & !y -> x
     """
     # Need to multiply by three, because there's three nodes for each colour
-    graph = {(vert+1)*3 : {(v+1)*3 for v in graph[vert]} for vert in graph}
+    graph = {vert * 3: {v * 3 for v in graph[vert]} for vert in graph}
     result = {}
+    # The implication graph is the hardest damn part of it all.
+    # This will only check the uniquness of the colors, 
+    # AND ONLY THEN we use ANOTHER TWO FUNCTIONS to check
+    # whether the zll the vertices actually have exacty one colour >:[
+    # Man, the Catalan numbers would've been so much more fun.
     for vertice, items in graph.items():
-        for i in range(vertice, vertice+3):
-            result[i] = list(range(-vertice-2, -vertice+1))
-            result[i].pop(2 - i%3)
+        for i in range(3):
+            if (vertice + i) not in result:
+                result[vertice+i] = list(
+                        filter(
+                            lambda x: x != -vertice-i,
+                            range(-vertice-2, -vertice+1)
+                            )
+                        )
+                print(vertice+i)
             for item in items:
-                result[i].append(item + i%3)
+                if -item-i not in result[vertice+i]:
+                    result[vertice+i].append(-item-i)
+                if (item + i) not in result:
+                    result[item+i] = list(
+                            filter(
+                                lambda x: x != -item-i,
+                                range(-item-2, -item+1)
+                                )
+                            )
+                if -vertice-i not in result[item+i]:
+                    result[item+i].append(-vertice-i)
+                
     return result, min(result)
 
-def dfs(grp: Dict[int, List[int]], cur: int, visited: Set[int], path: List[int]) -> List[int]:
+
+def dfs(
+    grp: Dict[int, List[int]], cur: int, visited: Set[int], path: List[int]
+) -> List[int]:
     """
     Perform dfs on graph
 
@@ -97,6 +118,7 @@ def dfs(grp: Dict[int, List[int]], cur: int, visited: Set[int], path: List[int])
 
     return path
 
+
 def invert_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
     """
     Invert the edges in a graph
@@ -116,10 +138,11 @@ def invert_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
                 new_graph[item].append(node)
     return new_graph
 
+
 def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
     """
     Perform Kosaraju's algorith on graph
-    
+
     Args:
         graph: a idrected graph
 
@@ -134,12 +157,15 @@ def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
 
     graph_inv = invert_graph(graph)
     visited.clear()
-    path = []
+    paths = []
     while len(base_path):
         node = base_path.pop()
         if node not in visited:
-            dfs(graph_inv, node, visited, path)
+            path = dfs(graph_inv, node, visited, [])
+            for index, p in enumerate(paths):
+                for node in p:
+                    if node in map(abs, path):
+                        paths[i].extend
             yield path[:]
             path.clear()
     return
-
