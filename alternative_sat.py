@@ -2,7 +2,7 @@
 2-SAT solution for the graph 3-colouring problem
 """
 
-from typing import Dict, Tuple, List, Set, Iterator
+from typing import Dict, Tuple, List, Set, Iterator, Union
 
 # The function is redundant now, but it has sentimental value for me
 # Should someone delete this, I'll remove their kneecaps with an ice cream scoop
@@ -57,7 +57,7 @@ def make_impl_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
     # The implication graph is the hardest damn part of it all.
     # This will only check the uniquness of the colors, 
     # AND ONLY THEN we use ANOTHER TWO FUNCTIONS to check
-    # whether the zll the vertices actually have exacty one colour >:[
+    # whether all the vertices actually have exacty one colour >:[
     # Man, the Catalan numbers would've been so much more fun.
     for vertice, items in graph.items():
         for i in range(3):
@@ -86,16 +86,27 @@ def make_impl_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
 
 
 def dfs(
-    grp: Dict[int, List[int]], cur: int, visited: Set[int], path: List[int]
-) -> List[int]:
+    grp: Dict[int, List[int]],
+    cur: int,
+    visited: Set[int],
+    path: List[int],
+    *,
+    cycles: List[List[int]] = [],
+    count_cycles: bool = False
+) -> Union[List[int], Tuple[List[int]]]:
     """
     Perform dfs on graph
 
     Args:
-        graph: a directed graph
+        grp: Dict[int, List[int]] - a directed graph
+        cur: int - node to strt with
+        visited: Set[int] - visitd edges
+        path: List[int] - the path
+        cycles: List[List[int]] = [] - cycles array
+        count_cycles: bool = False - whether to count cycles
 
     Returns:
-        List[int] - the order of the nodes
+        Union[List[int], Tuple[List[int]]] - either a path, or a path and cycles
     """
     if cur in visited:
         return
@@ -109,6 +120,10 @@ def dfs(
         visited.add(s)
         if s not in path:
             path.append(s)
+        elif count_cycles:
+            index = path.index(s)
+            cycles.append(path[index:])
+                    
         if s in graph:
             graph[s] = list(filter(lambda x: x not in visited, graph[s]))
             if graph[s] != []:
@@ -116,7 +131,7 @@ def dfs(
                 continue
         stack.remove(s)
 
-    return path
+    return (path, cycles) if count_cycles else path
 
 
 def invert_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
@@ -157,15 +172,11 @@ def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
 
     graph_inv = invert_graph(graph)
     visited.clear()
-    paths = []
+    path = []
     while len(base_path):
         node = base_path.pop()
         if node not in visited:
             path = dfs(graph_inv, node, visited, [])
-            for index, p in enumerate(paths):
-                for node in p:
-                    if node in map(abs, path):
-                        paths[i].extend
             yield path[:]
             path.clear()
     return
