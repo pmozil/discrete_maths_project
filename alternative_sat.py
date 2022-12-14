@@ -91,8 +91,7 @@ def dfs(
     visited: Set[int],
     path: List[int],
     *,
-    cycles: List[List[int]] = [],
-    count_cycles: bool = False
+    cycles: List[List[int]] = None
 ) -> Union[List[int], Tuple[List[int]]]:
     """
     Perform dfs on graph
@@ -103,7 +102,6 @@ def dfs(
         visited: Set[int] - visitd edges
         path: List[int] - the path
         cycles: List[List[int]] = [] - cycles array
-        count_cycles: bool = False - whether to count cycles
 
     Returns:
         Union[List[int], Tuple[List[int]]] - either a path, or a path and cycles
@@ -118,20 +116,24 @@ def dfs(
     while stack:
         s = stack[-1]
         visited.add(s)
+
         if s not in path:
             path.append(s)
-        elif count_cycles:
-            index = path.index(s)
-            cycles.append(path[index:])
+
+        for node in graph.get(s):
+            if node in path and isinstance(cycles, list):
+                cycle = path[path.index(node):path.index(s)+1]
+                if cycle not in cycles:
+                    cycles.append(cycle)
                     
         if s in graph:
-            graph[s] = list(filter(lambda x: x not in visited, graph[s]))
-            if graph[s] != []:
-                stack.append(graph[s][0])
-                continue
+            for node in graph.get(s):
+                if node not in visited:
+                    stack.append(node)
+                    continue
         stack.remove(s)
 
-    return (path, cycles) if count_cycles else path
+    return (path, cycles) if isinstance(cycles, list) else path
 
 
 def invert_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
