@@ -2,7 +2,7 @@
 2-SAT solution for the graph 3-colouring problem
 """
 
-from typing import Dict, Tuple, List, Set, Iterator, Union
+from typing import Dict, Tuple, List, Set, Iterator
 
 # The function is redundant now, but it has sentimental value for me
 # Should someone delete this, I'll remove their kneecaps with an ice cream scoop
@@ -91,8 +91,10 @@ def dfs(
     visited: Set[int],
     path: List[int],
     *,
-    cycles: List[List[int]] = None
-) -> Union[List[int], Tuple[List[int]]]:
+    cycles: List[List[int]] = None,
+    colours: Dict[int, int] = None,
+    back_edges: List[Tuple[int]] = None
+) -> Tuple[List[int], List[List[int]], Dict[int, int], Dict[int, int]]:
     """
     Perform dfs on graph
 
@@ -101,10 +103,12 @@ def dfs(
         cur: int - node to strt with
         visited: Set[int] - visitd edges
         path: List[int] - the path
-        cycles: List[List[int]] = [] - cycles array
+        cycles: List[List[int]] - cycles array
+        colours: List[Tuple[int]] - array of colours
+        back_edges: List[Tuple[int]] - array of back edges
 
     Returns:
-        Union[List[int], Tuple[List[int]]] - either a path, or a path and cycles
+        Tuple[List[int], List[List[int]], Dict[int, int], Dict[int, int]] - ... yeah.
     """
     if cur in visited:
         return
@@ -112,6 +116,7 @@ def dfs(
     graph = {vertice: sorted(edges) for vertice, edges in grp.items()}
     result = []
     stack = [cur]
+    base = 1
 
     while stack:
         s = stack[-1]
@@ -125,6 +130,12 @@ def dfs(
                 cycle = path[path.index(node):path.index(s)+1]
                 if cycle not in cycles:
                     cycles.append(cycle)
+                if isinstance(back_edges, list) and (s, cycle[0]) not in back_edges:
+                    back_edges.append((s, cycle[0]))
+
+        if isinstance(colours, dict) and s not in colours:
+            base = 0 if base else 1
+            colours[s] = base
                     
         if s in graph:
             for node in graph.get(s):
@@ -133,7 +144,42 @@ def dfs(
                     continue
         stack.remove(s)
 
-    return (path, cycles) if isinstance(cycles, list) else path
+    return (path, cycles, colours, back_edges)
+
+
+def intersections(odd_cycles: List[List[int]], even_cycles: List[List[int]]) -> Iterator[List[int]]:
+    """
+    Get intersections in lists of cycles
+
+    Args:
+        odd_cycles: List[List[int]]
+        even_cycles: List[List[int]]
+
+    Returns:
+        Iterator[List[int]] - a list of intersections
+    """
+    for ec in even_cycles:
+        for oc in odd_cycles:
+            for el in ec:
+                if el in oc:
+                    yield ec
+                    break
+
+
+def get_back_edges(odd_cycles: List[List[int]], back_edges: Dict[int, int]) -> Iterator[Tuple[int]]:
+    """
+    Get back edges for odd cycles
+
+    Args:
+        odd_cycles: List[List[int]] - the odd cycles
+        back_edges: Dict[int, int] - the back edges
+
+    Returns:
+        Iterator[Tuple[int]] - a generator of back edges
+    """
+    for v1, v2 in back_edges.items():
+        if any(v1 in x and v2 in x and x!=y for x in odd_cycles for y in odd_cycles):
+            yield v1, v2
 
 
 def invert_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
@@ -170,7 +216,7 @@ def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
     base_path = []
     for i in graph.keys():
         if i not in visited:
-            dfs(graph, i, visited, base_path)
+            _ = dfs(graph, i, visited, base_path)
 
     graph_inv = invert_graph(graph)
     visited.clear()
@@ -178,7 +224,7 @@ def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
     while len(base_path):
         node = base_path.pop()
         if node not in visited:
-            path = dfs(graph_inv, node, visited, [])
+            path, *_ = dfs(graph_inv, node, visited, [])
             yield path[:]
             path.clear()
     return
