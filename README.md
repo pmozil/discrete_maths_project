@@ -1,5 +1,7 @@
 # discrete_maths_project report
 
+[Here's the link for the work, in which the algorithm used is described](https://www.researchgate.net/publication/220827314_Solving_3-Colouring_via_2SAT)
+
 ## Project structure
 The project itself consists of only one file - `two_sat.py`
 
