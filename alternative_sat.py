@@ -86,15 +86,16 @@ def dfs(
             base = 0 if base else 1
             colours[s] = base
 
-        for node in graph.get(s):
-            if node in path and isinstance(cycles, list):
-                cycle = path[path.index(node) : path.index(s) + 1]
-                if cycle not in cycles:
-                    cycles.append(cycle)
-            if neigh in visited:
-                back_edges.append((s, neigh))
-            if node not in visited:
-                stack.append(node)
+        if s in graph:
+            for node in graph.get(s):
+                if node in path and isinstance(cycles, list):
+                    cycle = path[path.index(node) : path.index(s) + 1]
+                    if cycle not in cycles:
+                        cycles.append(cycle)
+                if node in visited and isinstance(back_edges, list):
+                    back_edges.append((s, node))
+                if node not in visited:
+                    stack.append(node)
 
         stack.remove(s)
 
@@ -212,6 +213,32 @@ def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
     return
 
 
+def adjacent_edges(graph: Dict[int, List[int]], edges: List[Tuple[int]]) -> List[Tuple[int]]:
+    """
+    Get edges that are adjacent.
+
+    Args:
+        graph: Dict[int, List[int]]
+        edges: List[Tuple[int]] - the list of edges
+
+    Returns:
+        List[Tuple[int]] - list of pairs of vertices of those edges
+    """
+    res = []
+    for v1, v2 in edges:
+        for v_1, v_2 in edges:
+            if v1!=v_1 or v2!=v_2:
+                if v_1 in graph[v1] and (v_1, v1) not in graph:
+                    res.append((v1, v_1))
+                if v_2 in graph[v1] and (v_2, v1) not in graph:
+                    res.append((v1, v_2))
+                if v_1 in graph[v2] and (v_1, v2) not in graph:
+                    res.append((v2, v_1))
+                if v_2 in graph[v2] and (v_2, v2) not in graph:
+                    res.append((v2, v_2))
+    return res
+
+
 def colour_graph(graph: Dict[int, List[int]]) -> List[Tuple[int]]:
     """
     We're finally at the final step of solving the colouring problem.
@@ -235,8 +262,13 @@ def colour_graph(graph: Dict[int, List[int]]) -> List[Tuple[int]]:
             odd_cycles.append(cycle)
         else:
             even_cycles.append(cycle)
-   inters = get_cycle_intersections(odd_cycles, even_cycles)
-   back_edges = list(get_back_edges(odd_cycles, back_edges))
-   # TODO: finish the function
-   clauses = []
-   return
+    inters = get_cycle_intersections(odd_cycles, even_cycles)
+    back_edges = list(get_back_edges(odd_cycles, back_edges))
+    # TODO: finish the function
+    clauses = []
+    clauses.extend((-x, -y) for x, y in adjacent_edges(graph, back_edges))
+    clauses.extend(back_edges)
+    clauses.extend((-x, -y) for x, y in back_edges)
+    clauses.extend((cycle[0], cycle[-1]) for cycle in inters)
+    strongly_connected = list(scc(make_impl_graph(clauses)))
+    return
