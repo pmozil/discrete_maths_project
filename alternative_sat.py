@@ -90,7 +90,7 @@ def dfs(
     cur: int,
     visited: Set[int],
     path: List[int],
-    *,
+    *_,
     cycles: List[List[int]] = None,
     colours: Dict[int, int] = None,
     back_edges: List[Tuple[int]] = None
@@ -130,8 +130,11 @@ def dfs(
                 cycle = path[path.index(node):path.index(s)+1]
                 if cycle not in cycles:
                     cycles.append(cycle)
-                if isinstance(back_edges, list) and (s, cycle[0]) not in back_edges:
-                    back_edges.append((s, cycle[0]))
+
+        if s in graph:
+            for neigh in graph[s]:
+                if neigh in visited:
+                    back_edges.append((s, neigh))
 
         if isinstance(colours, dict) and s not in colours:
             base = 0 if base else 1
