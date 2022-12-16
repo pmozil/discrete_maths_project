@@ -41,50 +41,7 @@ def form_sats(graph: Dict[int, List[int]], nodes: List[bool]) -> bool:
 
 
 # We should've taken the Catalan numbers
-def make_impl_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
-    """
-    Make a directed implication graph from an undirected graph
-    Args:
-        graph: Dict[int, List[int]] - a dictionary.
-            Basically an unsparsed adjacency matrix
-    Returns:
-        bool - whether the graph edge colouring is valid
-    x v y = !x -> y & !y -> x
-    """
-    # Need to multiply by three, because there's three nodes for each colour
-    graph = {vert * 3: {v * 3 for v in graph[vert]} for vert in graph}
-    result = {}
-    # The implication graph is the hardest damn part of it all.
-    # This will only check the uniquness of the colors, 
-    # AND ONLY THEN we use ANOTHER TWO FUNCTIONS to check
-    # whether all the vertices actually have exacty one colour >:[
-    # Man, the Catalan numbers would've been so much more fun.
-    for vertice, items in graph.items():
-        for i in range(3):
-            if (vertice + i) not in result:
-                result[vertice+i] = list(
-                        filter(
-                            lambda x: x != -vertice-i,
-                            range(-vertice-2, -vertice+1)
-                            )
-                        )
-                print(vertice+i)
-            for item in items:
-                if -item-i not in result[vertice+i]:
-                    result[vertice+i].append(-item-i)
-                if (item + i) not in result:
-                    result[item+i] = list(
-                            filter(
-                                lambda x: x != -item-i,
-                                range(-item-2, -item+1)
-                                )
-                            )
-                if -vertice-i not in result[item+i]:
-                    result[item+i].append(-vertice-i)
-                
-    return result, min(result)
-
-
+# This dfs is gonna get a hernia, the way it carries this algorithm
 def dfs(
     grp: Dict[int, List[int]],
     cur: int,
@@ -125,32 +82,28 @@ def dfs(
         if s not in path:
             path.append(s)
 
-        for node in graph.get(s):
-            if node in path and isinstance(cycles, list):
-                cycle = path[path.index(node):path.index(s)+1]
-                if cycle not in cycles:
-                    cycles.append(cycle)
-
-        if s in graph:
-            for neigh in graph[s]:
-                if neigh in visited:
-                    back_edges.append((s, neigh))
-
         if isinstance(colours, dict) and s not in colours:
             base = 0 if base else 1
             colours[s] = base
-                    
-        if s in graph:
-            for node in graph.get(s):
-                if node not in visited:
-                    stack.append(node)
-                    continue
+
+        for node in graph.get(s):
+            if node in path and isinstance(cycles, list):
+                cycle = path[path.index(node) : path.index(s) + 1]
+                if cycle not in cycles:
+                    cycles.append(cycle)
+            if neigh in visited:
+                back_edges.append((s, neigh))
+            if node not in visited:
+                stack.append(node)
+
         stack.remove(s)
 
     return (path, cycles, colours, back_edges)
 
 
-def intersections(odd_cycles: List[List[int]], even_cycles: List[List[int]]) -> Iterator[List[int]]:
+def get_cycle_intersections(
+    odd_cycles: List[List[int]], even_cycles: List[List[int]]
+) -> Iterator[List[int]]:
     """
     Get intersections in lists of cycles
 
@@ -169,20 +122,46 @@ def intersections(odd_cycles: List[List[int]], even_cycles: List[List[int]]) -> 
                     break
 
 
-def get_back_edges(odd_cycles: List[List[int]], back_edges: Dict[int, int]) -> Iterator[Tuple[int]]:
+def get_back_edges(
+    cycles: List[List[int]], back_edges: List[Tuple[int]]
+) -> Iterator[Tuple[int]]:
     """
     Get back edges for odd cycles
 
     Args:
         odd_cycles: List[List[int]] - the odd cycles
-        back_edges: Dict[int, int] - the back edges
+        back_edges: List[Tuple[int]] - the back edges
 
     Returns:
         Iterator[Tuple[int]] - a generator of back edges
     """
     for v1, v2 in back_edges.items():
-        if any(v1 in x and v2 in x and x!=y for x in odd_cycles for y in odd_cycles):
-            yield v1, v2
+        if any(v2 in x for x in cycles):
+            yield (v1, v2)
+
+
+def make_impl_graph(edges: Tuple[int, int]) -> Dict[int, List[int]]:
+    """
+    Make a directed implication graph from an undirected graph
+    Args:
+        edges: Tuple[int, int] - a pair of vertice literals (could be 1 or -1).
+            should be off-by-1, because there should be -0 and +0
+    Returns:
+        bool - whether the graph edge colouring is valid
+    x v y = !x -> y & !y -> x
+    """
+    res = {}
+    for v1, v2 in edges:
+        if -v1 not in res:
+            res[-v1] = [v2]
+        else:
+            res[-v1].append(v2)
+        if -v2 not in res:
+            res[-v2] = [v1]
+        else:
+            res[-v2].append(v1)
+
+    return res
 
 
 def invert_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
@@ -231,3 +210,33 @@ def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
             yield path[:]
             path.clear()
     return
+
+
+def colour_graph(graph: Dict[int, List[int]]) -> List[Tuple[int]]:
+    """
+    We're finally at the final step of solving the colouring problem.
+    I started off really hating this problem, but it's growing on me.
+    Maybe it's not that bad? Nah, it's probably stockholm syndrome.
+    Anything related to graphs is just pure abomination algoritmified.
+    Well, at least I won't have to suffer for long now. Cheers!
+
+    Args:
+        graph: Dict[int, List[int]] - the graph
+
+    Returns:
+        List[Tuple[int]] - list of pairs: a vertice and it's colour
+    """
+    path, cycles, dfs_tree_colours, back_edges = dfs(
+        graph, 0, set(), [], colours={}, back_edges=[], cycles=[]
+    )
+    odd_cycles, even_cycles = []
+    for cycles in cycles:
+        if len(cycle) % 2:
+            odd_cycles.append(cycle)
+        else:
+            even_cycles.append(cycle)
+   inters = get_cycle_intersections(odd_cycles, even_cycles)
+   back_edges = list(get_back_edges(odd_cycles, back_edges))
+   # TODO: finish the function
+   clauses = []
+   return
