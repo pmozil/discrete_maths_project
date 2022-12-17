@@ -288,6 +288,7 @@ import collections
         for path in cycles_dfs(graph, node, node)
         if len(path) > 2
     ]
+    # This is neccesary, even though it eats like a ton of memory
     cycles = []
     set_cycles = []
     for cycle in all_cycles:
@@ -300,7 +301,6 @@ import collections
             odd_cycles.append(cycle)
         else:
             even_cycles.append(cycle)
-    print(odd_cycles, even_cycles)
     inters = get_cycle_intersections(odd_cycles, even_cycles)
     back_edges = list(get_back_edges(odd_cycles, back_edges))
     clauses = []
@@ -338,7 +338,7 @@ import collections
             colours.add(lit)
         i += 1
     # Man, it's like a billion checks for the colouring being proper.
-    if not all(x in colours or -x in colours for x in uniques):
+    if len(colours) != len(uniques):
         print("What? Why would the 2-CNF be satisfiable, but have no solution?")
         return {v - 1: e for v, e in dfs_tree_colours.items()}
 
@@ -346,5 +346,4 @@ import collections
         if col > 0:
             dfs_tree_colours[abs(col)] = 2
 
-    print({v - 1: [vv - 1 for vv in graph[v]] for v in graph})
     return {v - 1: e for v, e in dfs_tree_colours.items()}
