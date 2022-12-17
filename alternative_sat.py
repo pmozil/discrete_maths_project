@@ -115,12 +115,13 @@ def get_cycle_intersections(
     Returns:
         Iterator[List[int]] - a list of intersections
     """
+    res = []
     for ec in even_cycles:
-        for oc in odd_cycles:
+        for oc in [x for x in odd_cycles if x != ec]:
             for el in ec:
-                if el in oc:
-                    yield ec
-                    break
+                if el in oc and ec not in res:
+                    res.append(ec)
+    return res
 
 
 def get_back_edges(
@@ -136,7 +137,7 @@ def get_back_edges(
     Returns:
         Iterator[Tuple[int]] - a generator of back edges
     """
-    for v1, v2 in back_edges.items():
+    for v1, v2 in back_edges:
         if any(v2 in x for x in cycles):
             yield (v1, v2)
 
@@ -213,7 +214,9 @@ def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
     return
 
 
-def adjacent_edges(graph: Dict[int, List[int]], edges: List[Tuple[int]]) -> List[Tuple[int]]:
+def adjacent_edges(
+    graph: Dict[int, List[int]], edges: List[Tuple[int]]
+) -> List[Tuple[int]]:
     """
     Get edges that are adjacent.
 
@@ -227,7 +230,7 @@ def adjacent_edges(graph: Dict[int, List[int]], edges: List[Tuple[int]]) -> List
     res = []
     for v1, v2 in edges:
         for v_1, v_2 in edges:
-            if v1!=v_1 or v2!=v_2:
+            if v1 != v_1 or v2 != v_2:
                 if v_1 in graph[v1] and (v_1, v1) not in graph:
                     res.append((v1, v_1))
                 if v_2 in graph[v1] and (v_2, v1) not in graph:
@@ -239,7 +242,9 @@ def adjacent_edges(graph: Dict[int, List[int]], edges: List[Tuple[int]]) -> List
     return res
 
 
-def colour_graph(graph: Dict[int, List[int]]) -> List[Tuple[int]]:
+def colour_graph(
+    graph: Dict[int, List[int]], *, start_cols: List[Tuple[int]] = []
+) -> List[Tuple[int]]:
     """
     We're finally at the final step of solving the colouring problem.
     I started off really hating this problem, but it's growing on me.
@@ -253,16 +258,29 @@ def colour_graph(graph: Dict[int, List[int]]) -> List[Tuple[int]]:
     Returns:
         List[Tuple[int]] - list of pairs: a vertice and it's colour
     """
-    path, cycles, dfs_tree_colours, back_edges = dfs(
-        graph, 0, set(), [], colours={}, back_edges=[], cycles=[]
-    )
-    odd_cycles, even_cycles = []
-    for cycles in cycles:
+    # This is just for comfort, won't be faster until the node count is like 10^5
+    start_cols = dict(start_cols)
+    graph = {v+1: [ver + 1 for ver in graph[v]] for v in graph}
+    cycles, dfs_tree_colours, back_edges = [], {}, []
+    for elem in graph:
+        _ = dfs(
+            graph, 1, set(), [], colours=dfs_tree_colours, back_edges=back_edges, cycles=cycles
+        )
+    cycles = [cycle for cycle in cycles if len(cycle) > 2]
+    print(cycles)
+    odd_cycles, even_cycles = [], []
+    for cycle in cycles:
         if len(cycle) % 2:
             odd_cycles.append(cycle)
         else:
             even_cycles.append(cycle)
+    print(odd_cycles, even_cycles)
     inters = get_cycle_intersections(odd_cycles, even_cycles)
+    odd_inters = get_cycle_intersections(odd_cycles, odd_cycles)
+    if len(odd_inters) > 0:
+        # Some odd cycles intersect, thus no solution. Yay!
+        print("this")
+        return {v-1: e for v, e in dfs_tree_colours.items()}
     back_edges = list(get_back_edges(odd_cycles, back_edges))
     # TODO: finish the function
     clauses = []
@@ -271,4 +289,39 @@ def colour_graph(graph: Dict[int, List[int]]) -> List[Tuple[int]]:
     clauses.extend((-x, -y) for x, y in back_edges)
     clauses.extend((cycle[0], cycle[-1]) for cycle in inters)
     strongly_connected = list(scc(make_impl_graph(clauses)))
-    return
+
+    # We gonna check if the formula is satisfiable. If not, NOBODY CARES
+    # I have a general distaste for graphs, especially this stupid case
+    # Why not use backtracking or even just a forward-backward approach?
+
+    # Get unique numbers from list, gotta have them all
+    uniques = set()
+    colours = set()
+
+    for clause in strongly_connected:
+        for lit in clause:
+            # No solution for CNF, so we can do nothing. The good ending
+            uniques.add(abs(lit))
+            if -lit in clause:
+                print("The 2-CNF is unsatisfiable. Sorry(")
+                return {v-1: e for v, e in dfs_tree_colours.items()}
+
+    i = 0
+    while len(colours) != len(uniques) and i < len(strongly_connected):
+        clause = strongly_connected[i]
+        for lit in clause:
+            if -lit in colours:
+                colours.remove(-lit)
+            colours.add(lit)
+        i += 1
+    # Man, it's like a billion checks for the colouring being proper.
+    if not all(x in colours or -x in colours for x in uniques):
+        print("What? Why would the 2-CNF be satisfiable, but have no solution?")
+        return {v-1: e for v, e in dfs_tree_colours.items()}
+
+    for col in colours:
+        if col > 0:
+            dfs_tree_colours[abs(col)] = 2
+
+    print({v-1 : [vv-1 for vv in graph[v]] for v in graph})
+    return {v-1: e for v, e in dfs_tree_colours.items()}

@@ -4,18 +4,22 @@ from io import StringIO
 
 def rg(path):
     gr = {}
+    cols = {}
     with open(path, 'r') as infile:
         quints = map(lambda x: tuple(map(int, x)), [line.split(',') for line in infile.readlines()])
         for obj in quints:
-            if (obj[0], obj[2]) in gr:
-                gr[(obj[0], obj[2])].add((obj[1], obj[3]))
+            if obj[0] in gr:
+                gr[obj[0]].add(obj[1])
             else:
-                gr[(obj[0], obj[2])] = {(obj[1], obj[3])}
-            if (obj[1], obj[3]) in gr:
-                gr[(obj[1], obj[3])].add((obj[0], obj[2]))
+                gr[obj[0]] = {obj[1]}
+            if obj[1] in gr:
+                gr[obj[1]].add(obj[0])
             else:
-                gr[(obj[1], obj[3])] = {(obj[0], obj[2])}
-    return gr
+                gr[obj[1]] = {obj[0]}
+            cols[obj[0]] = obj[2]
+            cols[obj[1]] = obj[3]
+    print(gr)
+    return {v: list(gr[v]) for v in gr}, cols
 
 def _least_colour(
         colours: List[int]
