@@ -302,6 +302,10 @@ import collections
         else:
             even_cycles.append(cycle)
     inters = get_cycle_intersections(odd_cycles, even_cycles)
+    odd_inters = intersections(odd_cycles, odd_cycles)
+    if len(odd_inters) > 1:
+        print("Odd cycles intersect. That means no 3-colouring for you >:-}")
+        return {v - 1: e for v, e in dfs_tree_colours.items()}.items()
     back_edges = list(get_back_edges(odd_cycles, back_edges))
     clauses = []
     clauses.extend((-x, -y) for x, y in adjacent_edges(graph, back_edges))
@@ -327,7 +331,6 @@ import collections
             if -lit in clause and apologise:
                 apologise = False
                 print("The 2-CNF might be unsatisfiable. The graph's colouring might not work")
-                #return {v - 1: e for v, e in dfs_tree_colours.items()}
 
     i = 0
     while len(colours) != len(uniques) and i < len(strongly_connected):
@@ -340,10 +343,10 @@ import collections
     # Man, it's like a billion checks for the colouring being proper.
     if len(colours) != len(uniques):
         print("What? Why would the 2-CNF be satisfiable, but have no solution?")
-        return {v - 1: e for v, e in dfs_tree_colours.items()}
+        return {v - 1: e for v, e in dfs_tree_colours.items()}.items()
 
     for col in colours:
         if col > 0:
             dfs_tree_colours[abs(col)] = 2
 
-    return {v - 1: e for v, e in dfs_tree_colours.items()}
+    return {v - 1: e for v, e in dfs_tree_colours.items()}.items()
