@@ -176,14 +176,15 @@ def cycles_dfs(
         if path and state == end:
             yield path
             continue
-        for next_state in graph[state]:
-            if next_state in path:
-                continue
-            fringe.append((next_state, path + [next_state]))
+        if state in graph:
+            for next_state in graph[state]:
+                if next_state in path:
+                    continue
+                fringe.append((next_state, path + [next_state]))
 
 
 def get_cycle_intersections(
-    odd_cycles: List[List[int]], even_cycles: List[List[int]]
+        odd_cycles: List[List[int]], even_cycles: List[List[int]], * ,odds: bool=False
 ) -> List[List[int]]:
     """
     Get intersections in lists of cycles
@@ -200,8 +201,15 @@ def get_cycle_intersections(
         for oc in [x for x in odd_cycles if x != ec]:
             i = 0
             while i < len(oc) - 2:
-                if oc[i] in ec and oc[i + 1] in ec:
-                    res.append(ec)
+                #if (
+                #    oc[i] in ec
+                #    and oc[i + 1] in ec
+                #    and not all(x in ec for x in oc)
+                #    and (len(oc) > 3 and len(ec) > 3)
+                #):
+                #    res.append(ec)
+                if any(x in ec for x in oc):
+                    res.append(oc)
                 i += 1
     return res
 
@@ -313,13 +321,13 @@ def adjacent_edges(
     for v1, v2 in edges:
         for v_1, v_2 in edges:
             if v1 != v_1 or v2 != v_2:
-                if v_1 in graph[v1] and (v_1, v1) not in graph:
+                if v1 != v_1 and v1 in graph[v_1] and (v_1, v1) not in res:
                     res.append((v1, v_1))
-                if v_2 in graph[v1] and (v_2, v1) not in graph:
+                if v1 != v_2 and v1 in graph[v_2] and (v_2, v1) not in res:
                     res.append((v1, v_2))
-                if v_1 in graph[v2] and (v_1, v2) not in graph:
+                if v2 != v_1 and v2 in graph[v_1] and (v_1, v2) not in res:
                     res.append((v2, v_1))
-                if v_2 in graph[v2] and (v_2, v2) not in graph:
+                if v2 != v_2 and v2 in graph[v_2] and (v_2, v2) not in res:
                     res.append((v2, v_2))
     return res
 
@@ -347,7 +355,7 @@ def colour_graph(
         graph, 1, set(), [], colours={}, back_edges=[]
     )
     all_cycles = [
-        path
+        tuple(path)
         for node in graph
         for path in cycles_dfs(graph, node, node)
         if len(path) > 2
@@ -365,15 +373,17 @@ def colour_graph(
             odd_cycles.append(cycle)
         else:
             even_cycles.append(cycle)
-    inters = get_cycle_intersections(odd_cycles, even_cycles)
-    odd_inters = get_cycle_intersections(odd_cycles, odd_cycles)
+    odd_cycles = list(set(map(tuple, odd_cycles)))
+    even_cycles = list(set(map(tuple, even_cycles)))
+    inters = list(set(get_cycle_intersections(odd_cycles, even_cycles)))
+    odd_inters = list(set(get_cycle_intersections(odd_cycles, odd_cycles)))
     if len(odd_inters) > 1:
-        print("Odd cycles intersect. That means no 3-colouring for you >:-}")
-        return [(v - 1, e) for v, e in dfs_tree_colours.items()]
+        print("Odd cycles intersect. The 3-colouring might not exist >:-}")
     back_edges = set(get_back_edges(odd_cycles, back_edges))
     clauses = []
     clauses.extend((-x, -y) for x, y in set(adjacent_edges(graph, back_edges)))
     clauses.extend((-x, -y) for x, y in back_edges)
+    clauses.extend(back_edges)
     clauses.extend((-cycle[0], -cycle[-1]) for cycle in inters)
     clauses.extend((-cycle[0], -cycle[-1]) for cycle in odd_cycles)
     strongly_connected = list(scc(make_impl_graph(clauses)))
@@ -406,9 +416,9 @@ def colour_graph(
             cols.extend(strongly_connected[j])
             new = strongly_connected[j]
             while new != []:
-                fst = new.pop(0)
-                if all(dfs_tree_colours[x] != 2 for x in graph[abs(fst)]):
-                    dfs_tree_colours[abs(fst)] = 2
+                el = new.pop()
+                if any(dfs_tree_colours[x] == dfs_tree_colours[abs(el)] for x in graph[abs(el)]):
+                    dfs_tree_colours[abs(el)] = 2
         j -= 1
 
     return [(v - 1, e) for v, e in dfs_tree_colours.items()]
