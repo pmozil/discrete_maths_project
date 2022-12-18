@@ -34,7 +34,6 @@ def read_graph(path: str) -> Tuple[Dict[int, List[int]], Dict[int, int]]:
                 gr[obj[1]] = {obj[0]}
             cols[obj[0]] = obj[2]
             cols[obj[1]] = obj[3]
-    print(gr)
     return {v: list(gr[v]) for v in gr}, cols
 
 
@@ -54,8 +53,10 @@ def write_graph(
     with open(path, "w", encoding="utf-8") as outfile:
         for vertice, adjacent_list in graph.items():
             for adjacent in adjacent_list:
-                if (vertice, adjacent) not in written\
-                    and (adjacent, vertice) not in written:
+                if (vertice, adjacent) not in written and (
+                    adjacent,
+                    vertice,
+                ) not in written:
                     outfile.write(
                         f"{vertice},{adjacent},{colours[vertice]},{colours[adjacent]}\n"
                     )
@@ -144,7 +145,7 @@ def dfs(
             colours[s] = base
 
         if s in graph:
-            for node in graph.get(s):
+            for node in reversed(graph.get(s)):
                 if node in visited and isinstance(back_edges, list):
                     back_edges.append((s, node))
                 if node not in visited:
@@ -199,9 +200,9 @@ def get_cycle_intersections(
         for oc in [x for x in odd_cycles if x != ec]:
             i = 0
             while i < len(oc) - 2:
-                if oc[i] in ec and oc[i+1] in ec:
+                if oc[i] in ec and oc[i + 1] in ec:
                     res.append(ec)
-                i+=1
+                i += 1
     return res
 
 
@@ -369,16 +370,13 @@ def colour_graph(
     if len(odd_inters) > 1:
         print("Odd cycles intersect. That means no 3-colouring for you >:-}")
         return [(v - 1, e) for v, e in dfs_tree_colours.items()]
-    back_edges = list(get_back_edges(odd_cycles, back_edges))
+    back_edges = set(get_back_edges(odd_cycles, back_edges))
     clauses = []
-    clauses.extend((-x, -y) for x, y in adjacent_edges(graph, back_edges))
-    clauses.extend(back_edges)
+    clauses.extend((-x, -y) for x, y in set(adjacent_edges(graph, back_edges)))
     clauses.extend((-x, -y) for x, y in back_edges)
-    clauses.extend((cycle[0], cycle[-1]) for cycle in inters)
-    clauses.extend((cycle[0], cycle[-1]) for cycle in odd_cycles)
+    clauses.extend((-cycle[0], -cycle[-1]) for cycle in inters)
+    clauses.extend((-cycle[0], -cycle[-1]) for cycle in odd_cycles)
     strongly_connected = list(scc(make_impl_graph(clauses)))
-
-    print(strongly_connected)
 
     # We gonna check if the formula is satisfiable. If not, NOBODY CARES
     # I have a general distaste for graphs, especially this stupid case
@@ -386,10 +384,11 @@ def colour_graph(
 
     # Get unique numbers from list, gotta have them all
     uniques = set()
-    colours = set()
     apologise = True
+    cols = []
+    new_cols = {}
 
-    for clause in strongly_connected:
+    for clause in reversed(strongly_connected):
         for lit in clause:
             # No solution for CNF, so we can do nothing. The good ending
             uniques.add(abs(lit))
@@ -398,24 +397,18 @@ def colour_graph(
                 print(
                     "The 2-CNF might be unsatisfiable. The graph's colouring might not work"
                 )
+                return [(v - 1, e) for v, e in dfs_tree_colours.items()]
 
-    i = -1
-    while len(colours) != len(uniques) and i < len(strongly_connected):
-        clause = strongly_connected[i]
-        for lit in reversed(clause):
-            if -lit in colours:
-                colours.remove(-lit)
-            colours.add(lit)
-            if len(colours) == len(uniques):
-                break
-        i -= 1
-    # Man, it's like a billion checks for the colouring being proper.
-    if len(colours) != len(uniques):
-        print("What? Why would the 2-CNF be satisfiable, but have no solution?")
-        return [(v - 1, e) for v, e in dfs_tree_colours.items()]
-
-    for col in colours:
-        if col > 0:
-            dfs_tree_colours[abs(col)] = 2
+    # Not that much a 2-SAT, but more of a hack. Too bad!
+    j = len(strongly_connected) - 1
+    while len(cols) < len(uniques) and j > 0:
+        if all(x not in cols and -x not in cols for x in strongly_connected[j]):
+            cols.extend(strongly_connected[j])
+            new = strongly_connected[j]
+            while new != []:
+                fst = new.pop(0)
+                if all(dfs_tree_colours[x] != 2 for x in graph[abs(fst)]):
+                    dfs_tree_colours[abs(fst)] = 2
+        j -= 1
 
     return [(v - 1, e) for v, e in dfs_tree_colours.items()]
