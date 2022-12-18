@@ -5,7 +5,7 @@ used in a graph 3-colouring problem
 
 from typing import Dict, Tuple, List
 
-def read_csv(file_path: str) -> Dict[Tuple[int], List[Tuple[int]]]:
+def read_csv(file_path: str) -> Tuple[Dict[int, List[int]], Tuple[int]]:
     """
     Reads a csv file and returns a graph, represented by
     a dictionary with a coloured vertice as key and a list of coloured vertices
@@ -15,7 +15,20 @@ def read_csv(file_path: str) -> Dict[Tuple[int], List[Tuple[int]]]:
         file_path: str - path to csv
 
     Returns:
-        Dict[Tuple[int], List[Tuple[int]]] - a graph model
+        Tuple[Dict[int, List[int]], Tuple[int]] - an undirected graph, and vertice colours
+    """
+    pass
+
+def write_csv(
+    path: str, graph: Dict[int, List[int]], colours: List[Tuple[int]]
+) -> None:
+    """
+    Write a graph with its colours to a file
+
+    Args:
+        path: str - the path to file
+        graph: Dict[int, List[int]] - the graph
+        colours: List[Tuple[int]] - the vertice colours
     """
     pass
 
