@@ -4,6 +4,65 @@
 
 from typing import Dict, Tuple, List, Set, Iterator
 
+
+def read_graph(path: str) -> Tuple[Dict[int, List[int]], Dict[int, int]]:
+    """
+    Read a graph from file
+
+    Args:
+        path: str path to file
+
+    Returns:
+        Tuple[Dict[int, List[int]], Dict[int, int]]: - the graph, and its vertice colours
+    """
+
+    gr = {}
+    cols = {}
+    with open(path, "r", encoding="utf-8") as infile:
+        quints = map(
+            lambda x: tuple(map(int, x)),
+            [line.split(",") for line in infile.readlines()],
+        )
+        for obj in quints:
+            if obj[0] in gr:
+                gr[obj[0]].add(obj[1])
+            else:
+                gr[obj[0]] = {obj[1]}
+            if obj[1] in gr:
+                gr[obj[1]].add(obj[0])
+            else:
+                gr[obj[1]] = {obj[0]}
+            cols[obj[0]] = obj[2]
+            cols[obj[1]] = obj[3]
+    print(gr)
+    return {v: list(gr[v]) for v in gr}, cols
+
+
+def write_graph(
+    path: str, graph: Dict[int, List[int]], colours: List[Tuple[int]]
+) -> None:
+    """
+    Write a graph with its colours to a file
+
+    Args:
+        path: str - the path to file
+        graph: Dict[int, List[int]] - the graph
+        colours: List[Tuple[int]] - the vertice colours
+    """
+    colours = dict(colours)
+    written = set()
+    with open(path, "w", encoding="utf-8") as outfile:
+        for vertice, adjacent_list in graph.items():
+            for adjacent in adjacent_list:
+                if (vertice, adjacent) not in written\
+                    and (adjacent, vertice) not in written:
+                    outfile.write(
+                        f"{vertice},{adjacent},{colours[vertice]},{colours[adjacent]}\n"
+                    )
+                    written.add((vertice, adjacent))
+    return {v: list(gr[v]) for v in gr}, cols
+
+
 # The function is redundant now, but it has sentimental value for me
 # Should someone delete this, I'll remove their kneecaps with an ice cream scoop
 def form_sats(graph: Dict[int, List[int]], nodes: List[bool]) -> bool:
@@ -49,7 +108,7 @@ def dfs(
     path: List[int],
     *_,
     colours: Dict[int, int] = None,
-    back_edges: List[Tuple[int]] = None
+    back_edges: List[Tuple[int]] = None,
 ) -> Tuple[List[int], List[List[int]], Dict[int, int], Dict[int, int]]:
     """
     Perform dfs on graph
@@ -96,7 +155,9 @@ def dfs(
     return (path, colours, back_edges)
 
 
-def cycles_dfs(graph: Dict[int, List[int]], start: int, end: int) -> Iterator[List[int]]:
+def cycles_dfs(
+    graph: Dict[int, List[int]], start: int, end: int
+) -> Iterator[List[int]]:
     """
     Do a dfs on a graph
 
@@ -122,7 +183,7 @@ def cycles_dfs(graph: Dict[int, List[int]], start: int, end: int) -> Iterator[Li
 
 def get_cycle_intersections(
     odd_cycles: List[List[int]], even_cycles: List[List[int]]
-) -> Iterator[List[int]]:
+) -> List[List[int]]:
     """
     Get intersections in lists of cycles
 
@@ -131,14 +192,16 @@ def get_cycle_intersections(
         even_cycles: List[List[int]]
 
     Returns:
-        Iterator[List[int]] - a list of intersections
+        List[List[int]] - a list of intersections
     """
     res = []
     for ec in even_cycles:
         for oc in [x for x in odd_cycles if x != ec]:
-            for el in ec:
-                if el in oc and ec not in res:
+            i = 0
+            while i < len(oc) - 2:
+                if oc[i] in ec and oc[i+1] in ec:
                     res.append(ec)
+                i+=1
     return res
 
 
@@ -156,7 +219,7 @@ def get_back_edges(
         Iterator[Tuple[int]] - a generator of back edges
     """
     for v1, v2 in back_edges:
-        if any(v2 in x for x in cycles):
+        if any((v2 in x and v1 not in x) or (v1 in x and v2 not in x) for x in cycles):
             yield (v1, v2)
 
 
@@ -264,17 +327,17 @@ def colour_graph(
     graph: Dict[int, List[int]], *, start_cols: List[Tuple[int]] = []
 ) -> List[Tuple[int]]:
     """
-    We're finally at the final step of solving the colouring problem.
-    I started off really hating this problem, but it's growing on me.
-    Maybe it's not that bad? Nah, it's probably stockholm syndrome.
-    Anything related to graphs is just pure abomination algoritmified.
-    Well, at least I won't have to suffer for long now. Cheers!
-import collections
-    Args:
-        graph: Dict[int, List[int]] - the graph
+        We're finally at the final step of solving the colouring problem.
+        I started off really hating this problem, but it's growing on me.
+        Maybe it's not that bad? Nah, it's probably stockholm syndrome.
+        Anything related to graphs is just pure abomination algoritmified.
+        Well, at least I won't have to suffer for long now. Cheers!
+    import collections
+        Args:
+            graph: Dict[int, List[int]] - the graph
 
-    Returns:
-        List[Tuple[int]] - list of pairs: a vertice and it's colour
+        Returns:
+            List[Tuple[int]] - list of pairs: a vertice and it's colour
     """
     # This is just for comfort, won't be faster until the node count is like 10^5
     start_cols = dict(start_cols)
@@ -302,10 +365,10 @@ import collections
         else:
             even_cycles.append(cycle)
     inters = get_cycle_intersections(odd_cycles, even_cycles)
-    odd_inters = intersections(odd_cycles, odd_cycles)
+    odd_inters = get_cycle_intersections(odd_cycles, odd_cycles)
     if len(odd_inters) > 1:
         print("Odd cycles intersect. That means no 3-colouring for you >:-}")
-        return {v - 1: e for v, e in dfs_tree_colours.items()}.items()
+        return [(v - 1, e) for v, e in dfs_tree_colours.items()]
     back_edges = list(get_back_edges(odd_cycles, back_edges))
     clauses = []
     clauses.extend((-x, -y) for x, y in adjacent_edges(graph, back_edges))
@@ -314,6 +377,8 @@ import collections
     clauses.extend((cycle[0], cycle[-1]) for cycle in inters)
     clauses.extend((cycle[0], cycle[-1]) for cycle in odd_cycles)
     strongly_connected = list(scc(make_impl_graph(clauses)))
+
+    print(strongly_connected)
 
     # We gonna check if the formula is satisfiable. If not, NOBODY CARES
     # I have a general distaste for graphs, especially this stupid case
@@ -330,23 +395,27 @@ import collections
             uniques.add(abs(lit))
             if -lit in clause and apologise:
                 apologise = False
-                print("The 2-CNF might be unsatisfiable. The graph's colouring might not work")
+                print(
+                    "The 2-CNF might be unsatisfiable. The graph's colouring might not work"
+                )
 
-    i = 0
+    i = -1
     while len(colours) != len(uniques) and i < len(strongly_connected):
         clause = strongly_connected[i]
-        for lit in clause:
+        for lit in reversed(clause):
             if -lit in colours:
                 colours.remove(-lit)
             colours.add(lit)
-        i += 1
+            if len(colours) == len(uniques):
+                break
+        i -= 1
     # Man, it's like a billion checks for the colouring being proper.
     if len(colours) != len(uniques):
         print("What? Why would the 2-CNF be satisfiable, but have no solution?")
-        return {v - 1: e for v, e in dfs_tree_colours.items()}.items()
+        return [(v - 1, e) for v, e in dfs_tree_colours.items()]
 
     for col in colours:
         if col > 0:
             dfs_tree_colours[abs(col)] = 2
 
-    return {v - 1: e for v, e in dfs_tree_colours.items()}.items()
+    return [(v - 1, e) for v, e in dfs_tree_colours.items()]
