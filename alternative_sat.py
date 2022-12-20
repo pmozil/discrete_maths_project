@@ -199,18 +199,15 @@ def get_cycle_intersections(
     res = []
     for ec in even_cycles:
         for oc in [x for x in odd_cycles if x != ec]:
-            i = 0
-            while i < len(oc) - 2:
-                #if (
-                #    oc[i] in ec
-                #    and oc[i + 1] in ec
-                #    and not all(x in ec for x in oc)
-                #    and (len(oc) > 3 and len(ec) > 3)
-                #):
-                #    res.append(ec)
-                if any(x in ec for x in oc):
-                    res.append(oc)
-                i += 1
+            #if (
+            #    oc[i] in ec
+            #    and oc[i + 1] in ec
+            #    and not all(x in ec for x in oc)
+            #    and (len(oc) > 3 and len(ec) > 3)
+            #):
+            #    res.append(ec)
+            if any(x in oc and all(y not in ecc for y in ec) for ecc in even_cycles for x in ecc):
+                res.append(oc)
     return res
 
 
@@ -385,8 +382,8 @@ def colour_graph(
     clauses.extend((-x, -y) for x, y in back_edges)
     clauses.extend(back_edges)
     clauses.extend((-cycle[0], -cycle[-1]) for cycle in inters)
-    clauses.extend((-cycle[0], -cycle[-1]) for cycle in odd_cycles)
     strongly_connected = list(scc(make_impl_graph(clauses)))
+    print(strongly_connected)
 
     # We gonna check if the formula is satisfiable. If not, NOBODY CARES
     # I have a general distaste for graphs, especially this stupid case
@@ -407,18 +404,21 @@ def colour_graph(
                 print(
                     "The 2-CNF might be unsatisfiable. The graph's colouring might not work"
                 )
-                return [(v - 1, e) for v, e in dfs_tree_colours.items()]
+                #return [(v - 1, e) for v, e in dfs_tree_colours.items()]
 
     # Not that much a 2-SAT, but more of a hack. Too bad!
     j = len(strongly_connected) - 1
-    while len(cols) < len(uniques) and j > 0:
+    while len(cols) < len(uniques) and j >= 0:
         if all(x not in cols and -x not in cols for x in strongly_connected[j]):
             cols.extend(strongly_connected[j])
             new = strongly_connected[j]
+            new = sorted(new, key=lambda x: len(graph[abs(x)]))
             while new != []:
                 el = new.pop()
-                if any(dfs_tree_colours[x] == dfs_tree_colours[abs(el)] for x in graph[abs(el)]):
-                    dfs_tree_colours[abs(el)] = 2
+                print(el)
+                if all(dfs_tree_colours[x] != 2 for x in graph[abs(el)]):
+                    if any(dfs_tree_colours[x] == dfs_tree_colours[abs(el)] for x in graph[abs(el)]):
+                        dfs_tree_colours[abs(el)] = 2
         j -= 1
 
     return [(v - 1, e) for v, e in dfs_tree_colours.items()]
