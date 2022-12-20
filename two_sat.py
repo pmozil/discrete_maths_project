@@ -3,23 +3,42 @@ The two-satisfiability problem,
 used in a graph 3-colouring problem
 """
 
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Set, Iterator
 
-def read_csv(file_path: str) -> Tuple[Dict[int, List[int]], Tuple[int]]:
+
+def read_graph(path: str) -> Tuple[Dict[int, List[int]], Dict[int, int]]:
     """
-    Reads a csv file and returns a graph, represented by
-    a dictionary with a coloured vertice as key and a list of coloured vertices
-    as objects
+    Read a graph from file
 
     Args:
-        file_path: str - path to csv
+        path: str path to file
 
     Returns:
-        Tuple[Dict[int, List[int]], Tuple[int]] - an undirected graph, and vertice colours
+        Tuple[Dict[int, List[int]], Dict[int, int]]: - the graph, and its vertice colours
     """
-    pass
 
-def write_csv(
+    gr = {}
+    cols = {}
+    with open(path, "r", encoding="utf-8") as infile:
+        quints = map(
+            lambda x: tuple(map(int, x)),
+            [line.split(",") for line in infile.readlines()],
+        )
+        for obj in quints:
+            if obj[0] in gr:
+                gr[obj[0]].add(obj[1])
+            else:
+                gr[obj[0]] = {obj[1]}
+            if obj[1] in gr:
+                gr[obj[1]].add(obj[0])
+            else:
+                gr[obj[1]] = {obj[0]}
+            cols[obj[0]] = obj[2]
+            cols[obj[1]] = obj[3]
+    return {v: list(gr[v]) for v in gr}, cols
+
+
+def write_graph(
     path: str, graph: Dict[int, List[int]], colours: List[Tuple[int]]
 ) -> None:
     """
@@ -30,29 +49,155 @@ def write_csv(
         graph: Dict[int, List[int]] - the graph
         colours: List[Tuple[int]] - the vertice colours
     """
-    pass
+    colours = dict(colours)
+    written = set()
+    with open(path, "w", encoding="utf-8") as outfile:
+        for vertice, adjacent_list in graph.items():
+            for adjacent in adjacent_list:
+                if (vertice, adjacent) not in written and (
+                    adjacent,
+                    vertice,
+                ) not in written:
+                    outfile.write(
+                        f"{vertice},{adjacent},{colours[vertice]},{colours[adjacent]}\n"
+                    )
+                    written.add((vertice, adjacent))
 
-def write_csv(file_path: str, graph: Dict[Tuple[int], List[Tuple[int]]]) -> None:
+# We should've taken the Catalan numbers
+def make_impl_graph(edges: Tuple[int, int]) -> Dict[int, List[int]]:
     """
-    Writes dictionary with a coloured vertice as key and
-    a list of coloured vertices as objects to a csv file
+    Make a directed implication graph from an undirected graph
+    Args:
+        edges: Tuple[int, int] - a pair of vertice literals (could be 1 or -1).
+            should be off-by-1, because there should be -0 and +0
+    Returns:
+        bool - whether the graph edge colouring is valid
+    x v y = !x -> y & !y -> x
+    """
+    res = {}
+    for v1, v2 in edges:
+        if -v1 not in res:
+            res[-v1] = [v2]
+        else:
+            res[-v1].append(v2)
+        if -v2 not in res:
+            res[-v2] = [v1]
+        else:
+            res[-v2].append(v1)
+
+    return {v: list(set(e)) for v, e in res.items()}
+
+
+def dfs(
+    grp: Dict[int, List[int]], cur: int, visited: Set[int], path: List[int]
+) -> List[int]:
+    """
+    Perform dfs on graph
 
     Args:
-        file_path: str - path to csv
-        graph: Dict[Tuple[int], List[Tuple[int]]] - a graph model
-    """
-    pass
-
-def colour_graph(
-        graph: Dict[Tuple[int], List[Tuple[int]]]
-        ) -> Dict[Tuple[int], List[Tuple[int]]]:
-    """
-    Parses a graph and returns either a proper coloured graph or nothing
-
-    Args:
-        graph: Dict[Tuple[int], List[Tuple[int]]] - a coloured graph
+        graph: a directed graph
 
     Returns:
-        Dict[Tuple[int], List[Tuple[int]]] - a coloured graph
+        List[int] - the order of the nodes
     """
-    pass
+    if cur in visited:
+        return
+
+    graph = {vertice: sorted(edges) for vertice, edges in grp.items()}
+    result = []
+    stack = [cur]
+
+    while stack:
+        s = stack[-1]
+        visited.add(s)
+        if s not in path:
+            path.append(s)
+        if s in graph:
+            graph[s] = list(filter(lambda x: x not in visited, graph[s]))
+            if graph[s] != []:
+                stack.append(graph[s][0])
+                continue
+        stack.remove(s)
+
+    return path
+
+
+def invert_graph(graph: Dict[int, List[int]]) -> Dict[int, List[int]]:
+    """
+    Invert the edges in a graph
+
+    Args:
+        graph: Dict[int, Lisst[int]] - a graph to be inverted
+
+    Returns:
+        Dict[int, List[int]] - an inverted graph
+    """
+    new_graph = {}
+    for node, items in graph.items():
+        for item in items:
+            if item not in new_graph:
+                new_graph[item] = [node]
+            else:
+                new_graph[item].append(node)
+    return new_graph
+
+
+def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
+    """
+    Perform Kosaraju's algorith on graph
+
+    Args:
+        graph: a idrected graph
+
+    Returns:
+        List[Set[int]] - a list of strongly connected components
+    """
+    visited = set()
+    base_path = []
+    for i in graph.keys():
+        if i not in visited:
+            dfs(graph, i, visited, base_path)
+
+    graph_inv = invert_graph(graph)
+    visited.clear()
+    paths = []
+    while len(base_path):
+        node = base_path.pop()
+        if node not in visited:
+            path = dfs(graph_inv, node, visited, [])
+            for index, p in enumerate(paths):
+                for node in p:
+                    if node in map(abs, path):
+                        paths[i].extend
+            yield path[:]
+            path.clear()
+    return
+
+
+def colour_graph(
+    graph: Dict[int, List[int]],
+    colours: Dict[int, int]
+) -> List[Tuple[int]]:
+    """
+    Colour a graph with 2-SAT
+
+    Args:
+        graph: Dict[int, List[int]] - the graph
+        colours: Dict[int, int]] - starting colours of vertices
+    Returns:
+        List[Tuple[int]] - list of pairs: a vertice and it's colour
+    """
+    graph = {(vertice+1)*3 : [(v+1)*3 for v in graph[vertice]] for vertice in graph}
+    colours = {(vertice+1)*3: col for vertice, col in colours.items()}
+    clauses = []
+    for vertice in graph:
+        col = colours[vertice]
+        lst = list(filter(lambda x: x!=3, range(3)))
+        clauses.append((vertice+lst[0], vertice+lst[1]))
+        for adjacent in graph[vertice]:
+            for i in lst:
+                if (-adjacent-i, -vertice-i) not in clauses:
+                    clauses.append((-vertice-i, -adjacent-i))
+    impl_graph = make_impl_graph(clauses)
+    res = scc(impl_graph)
+    return impl_graph, res
