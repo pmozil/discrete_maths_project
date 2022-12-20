@@ -165,10 +165,6 @@ def scc(graph: Dict[int, List[int]]) -> List[Set[int]]:
         node = base_path.pop()
         if node not in visited:
             path = dfs(graph_inv, node, visited, [])
-            for index, p in enumerate(paths):
-                for node in p:
-                    if node in map(abs, path):
-                        paths[i].extend
             yield path[:]
             path.clear()
     return
@@ -192,7 +188,7 @@ def colour_graph(
     clauses = []
     for vertice in graph:
         col = colours[vertice]
-        lst = list(filter(lambda x: x!=3, range(3)))
+        lst = list(filter(lambda x: x!=col, range(3)))
         clauses.append((vertice+lst[0], vertice+lst[1]))
         for adjacent in graph[vertice]:
             for i in lst:
@@ -200,4 +196,4 @@ def colour_graph(
                     clauses.append((-vertice-i, -adjacent-i))
     impl_graph = make_impl_graph(clauses)
     res = scc(impl_graph)
-    return impl_graph, res
+    return list(res)
