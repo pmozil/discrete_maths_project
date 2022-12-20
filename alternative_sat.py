@@ -61,7 +61,6 @@ def write_graph(
                         f"{vertice},{adjacent},{colours[vertice]},{colours[adjacent]}\n"
                     )
                     written.add((vertice, adjacent))
-    return {v: list(gr[v]) for v in gr}, cols
 
 
 # The function is redundant now, but it has sentimental value for me
@@ -415,7 +414,6 @@ def colour_graph(
             new = sorted(new, key=lambda x: len(graph[abs(x)]))
             while new != []:
                 el = new.pop()
-                print(el)
                 if all(dfs_tree_colours[x] != 2 for x in graph[abs(el)]):
                     if any(dfs_tree_colours[x] == dfs_tree_colours[abs(el)] for x in graph[abs(el)]):
                         dfs_tree_colours[abs(el)] = 2
