@@ -17,25 +17,20 @@ def read_csv(path: str) -> Tuple[Dict[int, List[int]], Dict[int, int]]:
         Tuple[Dict[int, List[int]], Dict[int, int]]: - the graph, and its vertice colours
     """
 
-    gr = {}
-    cols = {}
-    with open(path, "r", encoding="utf-8") as infile:
-        quints = map(
-            lambda x: tuple(map(int, x)),
-            [line.split(",") for line in infile.readlines()],
-        )
-        for obj in quints:
-            if obj[0] in gr:
-                gr[obj[0]].add(obj[1])
-            else:
-                gr[obj[0]] = {obj[1]}
-            if obj[1] in gr:
-                gr[obj[1]].add(obj[0])
-            else:
-                gr[obj[1]] = {obj[0]}
-            cols[obj[0]] = obj[2]
-            cols[obj[1]] = obj[3]
-    return {v: list(gr[v]) for v in gr}, cols
+    graph = dict()
+    colors = dict()
+    with open(path, 'r', encoding = 'utf-8') as file:
+        lst = file.read().replace(',', '').split('\n')[:-1]
+    for elem in lst:
+        if int(elem[0]) not in graph:
+            graph[int(elem[0])] = []
+        if int(elem[1]) not in graph:
+            graph[int(elem[1])] = []
+        graph[int(elem[0])].append(int(elem[1]))
+        graph[int(elem[1])].append(int(elem[0]))
+        colors[int(elem[0])] = int(elem[2])
+        colors[int(elem[1])] = int(elem[3])
+    return graph, colors
 
 
 def write_csv(
