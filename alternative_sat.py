@@ -329,7 +329,7 @@ def adjacent_edges(
 
 
 def colour_graph(
-    graph: Dict[int, List[int]], *, start_cols: List[Tuple[int]] = []
+    graph: Dict[int, List[int]]
 ) -> List[Tuple[int]]:
     """
         We're finally at the final step of solving the colouring problem.
@@ -345,11 +345,12 @@ def colour_graph(
             List[Tuple[int]] - list of pairs: a vertice and it's colour
     """
     # This is just for comfort, won't be faster until the node count is like 10^5
-    start_cols = dict(start_cols)
+    clauses = []
     graph = {v + 1: [ver + 1 for ver in graph[v]] for v in graph}
     _, dfs_tree_colours, back_edges = dfs(
         graph, 1, set(), [], colours={}, back_edges=[]
     )
+    back_edges = list(set(back_edges))
     all_cycles = [
         tuple(path)
         for node in graph
@@ -376,12 +377,12 @@ def colour_graph(
     if len(odd_inters) > 1:
         print("Odd cycles intersect. The 3-colouring might not exist >:-}")
     back_edges = set(get_back_edges(odd_cycles, back_edges))
-    clauses = []
     clauses.extend((-x, -y) for x, y in set(adjacent_edges(graph, back_edges)))
     clauses.extend((-x, -y) for x, y in back_edges)
-    clauses.extend(back_edges)
     clauses.extend((-cycle[0], -cycle[-1]) for cycle in inters)
+    clauses.extend((-cycle[0], -cycle[-1]) for cycle in odd_cycles)
     strongly_connected = list(scc(make_impl_graph(clauses)))
+    print(strongly_connected)
 
     # We gonna check if the formula is satisfiable. If not, NOBODY CARES
     # I have a general distaste for graphs, especially this stupid case
@@ -391,7 +392,6 @@ def colour_graph(
     uniques = set()
     apologise = True
     cols = []
-    new_cols = {}
 
     for clause in reversed(strongly_connected):
         for lit in clause:

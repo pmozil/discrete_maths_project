@@ -211,6 +211,5 @@ def colour_graph(
                     nots[abs(col)//3] = [abs(col)%3, colours[3*(abs(col)//3)]]
         else:
             print("A vertice cannot be coloured!")
-            raise ValueError
         j -= 1
     return sorted([(v-1, col) for v, col in colouring.items()], key=lambda x: x[0])
