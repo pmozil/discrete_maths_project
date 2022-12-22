@@ -205,12 +205,14 @@ def colour_graph(
         if all(-x not in last for x in last):
             while last != []:
                 col = last.pop()
-                if col > 0:
-                    if abs(col)//3 not in nots or abs(col)%3 not in nots[abs(col)//3]:
-                        colouring[abs(col)//3] = abs(col)%3
+                if col > 0 and abs(col)%3 != colours[3*(abs(col)//3)]:
+                    #if abs(col)//3 not in nots or abs(col)%3 not in nots[abs(col)//3]:
+                    colouring[abs(col)//3] = abs(col)%3
                 elif abs(col)//3 not in nots:
-                    nots[abs(col)//3] = [abs(col)%3, colours[3*(abs(col)//3)]]
+                    nots[abs(col)//3] = list(set([abs(col)%3, colours[3*(abs(col)//3)]]))
         else:
             print("A vertice cannot be coloured!")
         j -= 1
+    if colouring == {}:
+        colouring = {v: e[0] for v, e in nots.items()}
     return sorted([(v-1, col) for v, col in colouring.items()], key=lambda x: x[0])
