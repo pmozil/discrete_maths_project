@@ -6,7 +6,7 @@ used in a graph 3-colouring problem
 from typing import Dict, Tuple, List, Set, Iterator
 
 
-def read_graph(path: str) -> Tuple[Dict[int, List[int]], Dict[int, int]]:
+def read_csv(path: str) -> Tuple[Dict[int, List[int]], Dict[int, int]]:
     """
     Read a graph from file
 
@@ -38,7 +38,7 @@ def read_graph(path: str) -> Tuple[Dict[int, List[int]], Dict[int, int]]:
     return {v: list(gr[v]) for v in gr}, cols
 
 
-def write_graph(
+def write_csv(
     path: str, graph: Dict[int, List[int]], colours: List[Tuple[int]]
 ) -> None:
     """
@@ -190,6 +190,7 @@ def colour_graph(
         col = colours[vertice]
         lst = list(filter(lambda x: x!=col, range(3)))
         clauses.append((vertice+lst[0], vertice+lst[1]))
+        clauses.append((-vertice-lst[0], -vertice-lst[1]))
         for adjacent in graph[vertice]:
             for i in lst:
                 if colours[adjacent] != adjacent+i and (-adjacent-i, -vertice-i) not in clauses:
