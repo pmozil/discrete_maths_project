@@ -382,7 +382,6 @@ def colour_graph(
     clauses.extend(back_edges)
     clauses.extend((-cycle[0], -cycle[-1]) for cycle in inters)
     strongly_connected = list(scc(make_impl_graph(clauses)))
-    print(strongly_connected)
 
     # We gonna check if the formula is satisfiable. If not, NOBODY CARES
     # I have a general distaste for graphs, especially this stupid case

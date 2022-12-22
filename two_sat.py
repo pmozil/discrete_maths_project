@@ -185,7 +185,6 @@ def colour_graph(
     """
     graph = {(vertice+1)*3 : [(v+1)*3 for v in graph[vertice]] for vertice in graph}
     colours = {(vertice+1)*3: col for vertice, col in colours.items()}
-    print(colours)
     clauses = []
     for vertice in graph:
         col = colours[vertice]
@@ -202,7 +201,6 @@ def colour_graph(
     j = len(res) - 1
     while j>=0 and len(colouring) != len(graph):
         last = res[j]
-        print(last)
         if all(-x not in last for x in last):
             while last != []:
                 col = last.pop()
@@ -211,5 +209,8 @@ def colour_graph(
                         colouring[abs(col)//3] = abs(col)%3
                 elif abs(col)//3 not in nots:
                     nots[abs(col)//3] = [abs(col)%3, colours[3*(abs(col)//3)]]
+        else:
+            print("A vertice cannot be coloured!")
+            raise ValueError
         j -= 1
     return sorted([(v-1, col) for v, col in colouring.items()], key=lambda x: x[0])
