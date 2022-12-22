@@ -193,7 +193,7 @@ def colour_graph(
         clauses.append((-vertice-lst[0], -vertice-lst[1]))
         for adjacent in graph[vertice]:
             for i in lst:
-                if colours[adjacent] != adjacent+i and (-adjacent-i, -vertice-i) not in clauses:
+                if colours[adjacent] != i and (-adjacent-i, -vertice-i) not in clauses:
                     clauses.append((-vertice-i, -adjacent-i))
     impl_graph = make_impl_graph(clauses)
     res = list(scc(impl_graph))
