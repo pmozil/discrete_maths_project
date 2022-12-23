@@ -58,10 +58,10 @@ The file consists of four functions:
 multiple `colour_graph` functions**
 
 Here's the distribution of work:
-- `read_csv`, `invert_graph`: Bohdan Pavliuk
+- `write_csv`, `invert_graph`: Bohdan Pavliuk
 
 
-- `colour_graph`, `dfs`: Denys Humeniuk, Iryna Voitsitska, Yulia Vistak
+- `colour_graph`, `dfs`, `read_csv`: Denys Humeniuk, Iryna Voitsitska, Yulia Vistak
 
 
 - `scc`, `alternative_sat`, `alternative_algorithm`: Petro Mozil
