@@ -2,7 +2,9 @@
 
 # Launching the program
 All the algorithms work more/less the same, so running
+
 > $ python -i script.py graph.csv
+
 will get you an interactive session with the graph coloured with the original algorithm
 
 # The algorithm principle
@@ -87,10 +89,10 @@ CSV example (`test.csv`):
 {0: 0, 1: 1, 2: 2, 3: 1, 4: 0, 5: 1}
 ```
 
-- colour_graph - returns either a recoloured graph or nothing, if the graph does not exist
+- `colour_graph` - returns either a recoloured graph or nothing, if the graph does not exist
 
 
-- make_impl_graph Make a directed implication graph from an undirected graph
+- `make_impl_graph` Make a directed implication graph from an undirected graph
 For each vertex makes the edges the same, only with a vertex of the opposite value
 dfs searches for the dfs-path from the point ‘cur'
 Sorts the edges of the input graph, throws the cur point into the stack
@@ -98,14 +100,14 @@ Then when key = stack[-1], filters the key value, throws each subsequent point f
 Сontinue these actions until the stack is empty
 
 
-- invert_graph inverts graph
+- `invert_graph` inverts graph
 Goes through each key of the input dictionary, then goes through each element of the key value and make each a key in the new dictionary, and its value is a list of keys in the old one
 scc searches strongly connected components
 Searches the dfs-path from the point, then inverts the graph. Then looks for the return path (dfs-path from the last point of the path to the initial one)
 If the path exists, there is also a strongly connected component
 
 
-- colour_graph Colour a graph with 2-SAT
+- `colour_graph` Colour a graph with 2-SAT
 It is then run through each vertex and forms an auxiliary list of edges
 Converts it into a directed implication graph and looks for strongly connected components
 
