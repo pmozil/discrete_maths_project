@@ -107,7 +107,5 @@ Searches the dfs-path from the point, then inverts the graph. Then looks for the
 If the path exists, there is also a strongly connected component
 
 
-- `colour_graph` Colour a graph with 2-SAT
-It is then run through each vertex and forms an auxiliary list of edges
-Converts it into a directed implication graph and looks for strongly connected components
+- `colour_graph` Colour a graph with 2-SAT It is then run through each vertex and forms an auxiliary list of edges Converts it into a directed implication graph and looks for strongly connected components. After that, looks through the SCCs and colours the edges. If x and -x in a single SCC, print a message about bad stuff
 
