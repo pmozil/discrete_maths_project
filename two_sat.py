@@ -64,7 +64,7 @@ def write_csv(
                     written.add((vertice, adjacent))
 
 # We should've taken the Catalan numbers
-def make_impl_graph(edges: Tuple[int, int]) -> Dict[int, List[int]]:
+def make_impl_graph(edges: List[Tuple[int, int]]) -> Dict[int, List[int]]:
     """
     Make a directed implication graph from an undirected graph
     Args:
@@ -199,9 +199,8 @@ def colour_graph(
     res = list(scc(impl_graph))
     colouring = {}
     nots = {}
-    j = len(res) - 1
-    while j>=0 and len(colouring) != len(graph):
-        last = res[j]
+    while res and len(colouring) != len(graph):
+        last = res.pop()
         if all(-x not in last for x in last):
             while last != []:
                 col = last.pop()
@@ -212,7 +211,6 @@ def colour_graph(
                     nots[abs(col)//3] = list(set([abs(col)%3, colours[3*(abs(col)//3)]]))
         else:
             print("A vertice cannot be coloured!")
-        j -= 1
     if colouring == {}:
         colouring = {v: e[0] for v, e in nots.items()}
     return sorted([(v-1, col) for v, col in colouring.items()], key=lambda x: x[0])

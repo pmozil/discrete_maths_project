@@ -1,5 +1,5 @@
 import argparse
-import alternative_sat as al
+#import alternative_sat as al
 import two_sat as ts
 # Tests, that's why they are commented out
 # grp, _ = ts.read_csv("test.csv")
@@ -19,3 +19,5 @@ parser.add_argument("fname")
 args = parser.parse_args()
 
 graph, cols = ts.read_csv(args.fname)
+new_cols = ts.colour_graph(graph, cols)
+print('new_cols = ', new_cols)
