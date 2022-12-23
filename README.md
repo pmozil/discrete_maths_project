@@ -1,5 +1,9 @@
 # discrete_maths_project report
 
+# Launching the program
+All the algorithms work more/less the same, so running
+> $ python -i script.py graph.csv
+will get you an interactive session with the graph coloured with the original algorithm
 
 # The algorithm principle
 The colouring is done be solving a 2-CNF formula.
